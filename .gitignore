@@ -1,0 +1,15 @@
+# Build output
+/bin/
+/dist/
+*.test
+*.out
+coverage.*
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Local environment
+.env

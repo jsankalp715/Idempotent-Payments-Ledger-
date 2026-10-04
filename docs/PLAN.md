@@ -10,24 +10,25 @@ recovery point after a context compaction. Decisions and their rationale live in
 - [x] First commit pushed
 
 ## M1: Skeleton
-- [ ] go.mod (Go 1.24, pgx v5.8.0, goose v3.26.0), .gitignore, Makefile
-- [ ] scripts/dev-db.sh (start-agnostic, idempotent role + database creation)
-- [ ] internal/config: env parsing with defaults and validation, plus unit tests
+- [x] go.mod (Go 1.24, pgx v5.8.0, goose v3.26.0), .gitignore, Makefile
+- [x] scripts/dev-db.sh (start-agnostic, idempotent role + database creation)
+- [x] internal/config: env parsing with defaults and validation, plus unit tests
 
 ## M2: Schema and migrations
-- [ ] Tables: accounts, transfers, entries, idempotency_keys
-- [ ] Constraints: CHECK balance >= 0 for non-system accounts, composite (id, currency) FKs,
+- [x] Tables: accounts, transfers, entries, idempotency_keys
+- [x] Constraints: CHECK balance >= 0 for non-system accounts, composite (id, currency) FKs,
       one system account per currency, UNIQUE transfers.idempotency_key
-- [ ] Triggers: entries and transfers append-only (UPDATE/DELETE/TRUNCATE rejected);
-      deferred check that each transfer has exactly two entries summing to zero
-- [ ] goose migrations embedded in the binary; migrate on start
-- [ ] internal/testdb: throwaway schema per test, migrated, dropped on cleanup
-- [ ] Schema integration tests (append-only, CHECK, balanced-transfer trigger, currency FK)
+- [x] Triggers: entries and transfers append-only (UPDATE/DELETE/TRUNCATE rejected);
+      deferred check that each transfer has exactly two entries summing to zero;
+      running-balance chain (balance_after) and cached balance == latest balance_after
+- [x] goose migrations embedded in the binary; migrate on start
+- [x] internal/testdb: throwaway schema per test, migrated, dropped on cleanup
+- [x] Schema integration tests (append-only, CHECK, balanced-transfer trigger, currency FK)
 
 ## M3: Transaction runner
-- [ ] RunInTx with configurable isolation and bounded exponential backoff with jitter
-- [ ] Retry on 40001 serialization_failure, 40P01 deadlock_detected, idempotency unique races
-- [ ] Retry counters (by reason) for tests and logs; unit tests for classification and backoff
+- [x] RunInTx with configurable isolation and bounded exponential backoff with jitter
+- [x] Retry on 40001 serialization_failure, 40P01 deadlock_detected, idempotency unique races
+- [x] Retry counters (by reason) for tests and logs; unit tests for classification and backoff
 
 ## M4: Ledger domain
 - [ ] Validation (amounts, currency, ids, same-account) with unit tests
