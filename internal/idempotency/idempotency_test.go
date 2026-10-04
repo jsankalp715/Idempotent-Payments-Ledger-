@@ -133,7 +133,8 @@ func TestFingerprintRejectsUnencodableInput(t *testing.T) {
 }
 
 func TestLockIDIsStableAndSpread(t *testing.T) {
-	if LockID("k") != LockID("k") {
+	first, second := LockID("k"), LockID("k")
+	if first != second {
 		t.Fatal("LockID is not deterministic")
 	}
 	seen := map[int64]bool{}

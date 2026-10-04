@@ -2,7 +2,7 @@
 
 Double-entry ledger HTTP service: exactly-once transfers under client retries and
 network failures, no overdrafts or double-spends under concurrency, proven by
-stress tests in GitHub Actions. Go 1.24, net/http, pgx/v5, goose, slog, PostgreSQL 16, Docker.
+stress tests in GitHub Actions. Go 1.26+ (1.27 locally), net/http, pgx/v5, goose, slog, PostgreSQL 16, Docker.
 
 ## After a context compaction or VM restart
 1. Read `docs/PLAN.md` (milestone checklist, ticked as work completes) and `docs/DECISIONS.md`.
@@ -23,11 +23,13 @@ stress tests in GitHub Actions. Go 1.24, net/http, pgx/v5, goose, slog, PostgreS
   `nohup <cmd> > /tmp/<name>.log 2>&1 &`, then poll with short checks. Keep each stress run
   under about 10 minutes. Foreground commands time out after 2 to 10 minutes.
 - Before each push: `gofmt -l .` is empty, `go vet ./...` and staticcheck pass, tests pass.
-- Dependencies must keep building with the local Go 1.24 toolchain (`GOTOOLCHAIN=local`).
+- Use `export GOTOOLCHAIN=go1.27.1` (go.mod needs Go 1.26+; the VM ships 1.24.7). Keep
+  `make vulncheck`-clean dependencies (it runs in CI; vuln.go.dev is blocked on the VM).
 - Never put model names or identifiers in commits, code or docs.
 
 ## Environment (Claude Code cloud VM; verified)
-- Ubuntu 24.04, 4 vCPU, 16 GB RAM, ~30 GB disk. Go 1.24.7, Docker 29, PostgreSQL 16.
+- Ubuntu 24.04, 4 vCPU, 16 GB RAM, ~30 GB disk. Go 1.24.7 (go1.27.1 auto-downloads via
+  GOTOOLCHAIN), Docker 29, PostgreSQL 16.
   Network is allowlisted: proxy.golang.org, GitHub and Docker Hub work.
 - Postgres is installed but stopped after a restart. Start it and create the test role/DBs:
   `service postgresql start && scripts/dev-db.sh` (idempotent), then
@@ -36,7 +38,8 @@ stress tests in GitHub Actions. Go 1.24, net/http, pgx/v5, goose, slog, PostgreS
   skip, unless `LEDGER_REQUIRE_DB=1` (set in CI), which turns a missing DB into a failure.
   Each test runs in its own throwaway schema, so packages can run in parallel.
 - Docker: the daemon is not running by default: `nohup dockerd > /tmp/dockerd.log 2>&1 &`.
-  Containers cannot reach the agent proxy, so builds may need `--network host`.
+  The sandbox intercepts TLS; builds need its CA as a secret:
+  `EXTRA_CA_FILE=/root/.ccr/ca-bundle.crt docker compose up --build -d --wait`.
 - GitHub: use the `mcp__github__*` tools (load via ToolSearch) to inspect Actions runs and
   open PRs. The remote was empty at start: this branch is the only branch, so a PR may be
   impossible (no base branch). If so, leave the pushed branch and say so in `REPORT.md`.
@@ -49,7 +52,8 @@ retrying tx runner · `internal/idempotency` fingerprint, key store, TTL cleanup
 
 ## Commands (see Makefile)
 `make test` unit + integration · `make race` race detector, count=3 · `make stress` CI-sized stress ·
-`make stress-large` 10k+ transfers / 200 goroutines / 20 accounts · `make lint` · `make run`.
+`make stress-large` 10k+ transfers / 200 goroutines / 20 accounts · `make lint` · `make vulncheck` ·
+`make run` · `make docker-up` + `make smoke`.
 
 ## Definition of done
 The task prompt was truncated mid-sentence; this is reconstructed from its visible requirements.

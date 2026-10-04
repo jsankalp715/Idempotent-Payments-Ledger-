@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.7
 
 # ---- build ----------------------------------------------------------------
-# go.mod declares the minimum supported Go (1.24); release images are built
-# with the current, security-supported toolchain.
+# go.mod declares the minimum Go version (1.26); release images are built
+# with the latest stable toolchain.
 FROM golang:1.27-bookworm AS build
 WORKDIR /src
 ENV CGO_ENABLED=0 GOTOOLCHAIN=local
