@@ -42,30 +42,30 @@ recovery point after a context compaction. Decisions and their rationale live in
 - [x] Key header validation
 - [x] Store.Do: advisory try-lock (409 in flight), lookup (replay or 422), run business fn and
       persist key + response in the same transaction
-- [ ] Permanent guard: transfers.idempotency_key UNIQUE; response rebuilt after TTL expiry
+- [x] Permanent guard: transfers.idempotency_key UNIQUE; response rebuilt after TTL expiry
 - [x] TTL cleanup job (batched, SKIP LOCKED)
 
 ## M6: HTTP service
-- [ ] Routes: POST/GET accounts, GET entries, POST/GET transfers, GET /healthz
-- [ ] Error mapping and JSON envelope; strict JSON decoding; body size limit
-- [ ] Middleware: request id, access log (slog), panic recovery, request timeout
-- [ ] cmd/ledger: config, migrations, server, cleanup job, graceful shutdown
+- [x] Routes: POST/GET accounts, GET entries, POST/GET transfers, GET /healthz
+- [x] Error mapping and JSON envelope; strict JSON decoding; body size limit
+- [x] Middleware: request id, access log (slog), panic recovery, request timeout
+- [x] cmd/ledger: config, migrations, server, cleanup job, graceful shutdown
 
 ## M7: Integration tests (real Postgres)
-- [ ] Replay: same key + same payload returns identical status and body, executes once
-- [ ] Mismatch: same key + different payload is 422
-- [ ] In flight: same key during an in-flight request is 409
-- [ ] Atomicity: a failure injected after the transfer write leaves neither key nor transfer
-- [ ] Transient failures are retried and never cached; definitive errors are cached
-- [ ] TTL cleanup and post-expiry behaviour
-- [ ] Concurrent same-key storm executes exactly once
-- [ ] HTTP API behaviour (validation, 404s, pagination, health, graceful shutdown)
+- [x] Replay: same key + same payload returns identical status and body, executes once
+- [x] Mismatch: same key + different payload is 422
+- [x] In flight: same key during an in-flight request is 409
+- [x] Atomicity: a failure injected after the transfer write leaves neither key nor transfer
+- [x] Transient failures are retried and never cached; definitive errors are cached
+- [x] TTL cleanup and post-expiry behaviour
+- [x] Concurrent same-key storm executes exactly once
+- [x] HTTP API behaviour (validation, 404s, pagination, health, graceful shutdown)
 
 ## M8: Concurrency proofs
-- [ ] Invariant checker: (a) money conserved, (b) no negative balances, (c) balance equals sum of
+- [x] Invariant checker: (a) money conserved, (b) no negative balances, (c) balance equals sum of
       entries, (d) entries sum to zero, (e) each idempotency key applied at most once
-- [ ] Overdraft race: exactly floor(balance / amount) of N concurrent drains succeed
-- [ ] Deadlock test: opposing A->B and B->A in parallel, no deadlock, no drift; plus a real
+- [x] Overdraft race: exactly floor(balance / amount) of N concurrent drains succeed
+- [x] Deadlock test: opposing A->B and B->A in parallel, no deadlock, no drift; plus a real
       deadlock that the retry loop recovers from
 - [ ] Stress test: env-configurable; CI default under 2 min; large mode 10k+ transfers,
       200 goroutines, 20 accounts; retries with the same key, cancelled contexts, timeouts
