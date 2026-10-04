@@ -89,7 +89,7 @@ func (s *server) writeErr(w http.ResponseWriter, r *http.Request, err error) {
 	case errors.Is(err, context.DeadlineExceeded):
 		w.Header().Set("Retry-After", "1")
 		writeError(w, http.StatusServiceUnavailable, "timeout",
-			"the request timed out and was not applied; retry with the same Idempotency-Key")
+			"the request timed out; retry with the same Idempotency-Key to get its outcome")
 	case errors.Is(err, context.Canceled) && r.Context().Err() != nil:
 		// The client went away; nothing was committed and nobody is listening.
 		// 499 (nginx's "client closed request") only shows up in access logs.

@@ -15,6 +15,7 @@ import (
 )
 
 type runningApp struct {
+	addr     string
 	db       *testdb.DB
 	client   *ledgertest.Client
 	stop     context.CancelFunc
@@ -34,6 +35,7 @@ func startApp(t *testing.T, configure func(*config.Config)) *runningApp {
 	}
 	ctx, stop := context.WithCancel(context.Background())
 	r := &runningApp{
+		addr:   ln.Addr().String(),
 		db:     db,
 		client: ledgertest.NewClient("http://"+ln.Addr().String(), &http.Client{Timeout: 30 * time.Second}),
 		stop:   stop,
@@ -55,13 +57,14 @@ func startApp(t *testing.T, configure func(*config.Config)) *runningApp {
 }
 
 // TestGracefulShutdownFinishesInFlightTransfers starts a transfer that blocks
-// on a row lock, triggers shutdown, and checks that /healthz reports
-// draining, the in-flight transfer still commits once the lock is released,
-// and Serve returns cleanly.
+// on a row lock and triggers shutdown. It checks each phase: /healthz reports
+// draining while the server still serves, then the listener closes while the
+// transfer is still running, and the transfer still commits once its lock is
+// released, after which Serve returns cleanly.
 func TestGracefulShutdownFinishesInFlightTransfers(t *testing.T) {
 	r := startApp(t, func(c *config.Config) {
-		c.ShutdownDrainDelay = 300 * time.Millisecond
-		c.ShutdownTimeout = 20 * time.Second
+		c.ShutdownDrainDelay = time.Second
+		c.ShutdownTimeout = 30 * time.Second
 	})
 	ctx := context.Background()
 	from := r.client.CreateAccount(t, "USD", 1_000)
@@ -87,7 +90,8 @@ func TestGracefulShutdownFinishesInFlightTransfers(t *testing.T) {
 	waitForKeyLock(t, r.db.Pool, key)
 
 	r.stop()
-	// During the drain delay the server still answers, but reports draining.
+
+	// Phase 1: during the drain delay the server still answers, but reports draining.
 	deadline := time.Now().Add(5 * time.Second)
 	for {
 		resp, err := r.client.Do(ctx, http.MethodGet, "/healthz", nil)
@@ -100,7 +104,29 @@ func TestGracefulShutdownFinishesInFlightTransfers(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	time.Sleep(500 * time.Millisecond) // shutdown is now waiting for the request
+	// Phase 2: the listener closes while the transfer is still blocked, so
+	// Shutdown is now waiting for it.
+	deadline = time.Now().Add(10 * time.Second)
+	for {
+		conn, err := net.DialTimeout("tcp", r.addr, time.Second)
+		if err != nil {
+			break
+		}
+		_ = conn.Close()
+		if time.Now().After(deadline) {
+			t.Fatal("listener still accepting connections after shutdown started")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	select {
+	case resp := <-inFlight:
+		t.Fatalf("in-flight transfer finished before its lock was released: %s", resp)
+	case <-r.done:
+		t.Fatalf("Serve returned (%v) while a request was still in flight", r.serveErr)
+	default:
+	}
+
+	// Phase 3: release the lock; the request completes and Serve returns.
 	if err := tx.Rollback(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -114,9 +140,6 @@ func TestGracefulShutdownFinishesInFlightTransfers(t *testing.T) {
 		}
 	case <-time.After(20 * time.Second):
 		t.Fatal("Serve did not return after the last request finished")
-	}
-	if _, err := r.client.Do(ctx, http.MethodGet, "/healthz", nil); err == nil {
-		t.Fatal("server still accepts connections after shutdown")
 	}
 	var n int
 	if err := r.db.Pool.QueryRow(ctx, `SELECT count(*) FROM transfers WHERE idempotency_key = $1`, key).Scan(&n); err != nil || n != 1 {
