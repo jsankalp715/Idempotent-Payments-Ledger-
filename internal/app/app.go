@@ -145,7 +145,7 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 	case <-ctx.Done():
 	}
 
-	a.logger.Info("shutdown started", "drain_delay", a.cfg.ShutdownDrainDelay, "timeout", a.cfg.ShutdownTimeout)
+	a.logger.Info("shutdown started", "drain_delay", a.cfg.ShutdownDrainDelay.String(), "timeout", a.cfg.ShutdownTimeout.String())
 	a.health.SetDraining()
 	if d := a.cfg.ShutdownDrainDelay; d > 0 {
 		time.Sleep(d)

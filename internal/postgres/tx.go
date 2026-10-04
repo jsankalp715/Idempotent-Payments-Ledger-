@@ -108,7 +108,7 @@ func (r *TxRunner) Run(ctx context.Context, fn func(ctx context.Context, tx pgx.
 			return fmt.Errorf("%w after %d attempts: %w", ErrRetriesExhausted, attempt, err)
 		}
 		delay := r.backoff(attempt)
-		r.opts.Logger.DebugContext(ctx, "retrying transaction", "attempt", attempt, "reason", reason, "delay", delay)
+		r.opts.Logger.DebugContext(ctx, "retrying transaction", "attempt", attempt, "reason", reason, "delay", delay.String())
 		t := time.NewTimer(delay)
 		select {
 		case <-t.C:

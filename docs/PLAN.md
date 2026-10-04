@@ -67,12 +67,12 @@ recovery point after a context compaction. Decisions and their rationale live in
 - [x] Overdraft race: exactly floor(balance / amount) of N concurrent drains succeed
 - [x] Deadlock test: opposing A->B and B->A in parallel, no deadlock, no drift; plus a real
       deadlock that the retry loop recovers from
-- [ ] Stress test: env-configurable; CI default under 2 min; large mode 10k+ transfers,
+- [x] Stress test: env-configurable; CI default under 2 min; large mode 10k+ transfers,
       200 goroutines, 20 accounts; retries with the same key, cancelled contexts, timeouts
 
 ## M9: Verification runs
-- [ ] `go test -race -count=3 ./...` passes repeatedly
-- [ ] Large stress passes (read committed and serializable)
+- [x] `go test -race -count=3 ./...` passes repeatedly
+- [x] Large stress passes (read committed and serializable)
 - [ ] Results recorded in REPORT.md
 
 ## M10: CI
@@ -81,9 +81,9 @@ recovery point after a context compaction. Decisions and their rationale live in
 - [ ] CI green on the pushed branch, checked through the GitHub API
 
 ## M11: Docker
-- [ ] Multi-stage Dockerfile (static binary, non-root, healthcheck subcommand)
-- [ ] docker-compose.yml (Postgres 16 + service), smoke script
-- [ ] `docker compose up --build` verified locally (or limits documented)
+- [x] Multi-stage Dockerfile (static binary, non-root, healthcheck subcommand)
+- [x] docker-compose.yml (Postgres 16 + service), smoke script
+- [x] `docker compose up --build` verified locally (or limits documented)
 
 ## M12: Docs and wrap-up
 - [ ] README: overview, API, design, guarantees and how each is proven, how to run and test
