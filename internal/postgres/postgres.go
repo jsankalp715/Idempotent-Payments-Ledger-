@@ -14,6 +14,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgconn/ctxwatch"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
@@ -57,6 +58,16 @@ func NewPool(ctx context.Context, databaseURL string, opts PoolOptions) (*pgxpoo
 	cfg.ConnConfig.RuntimeParams["application_name"] = opts.ApplicationName
 	if opts.SearchPath != "" {
 		cfg.ConnConfig.RuntimeParams["search_path"] = opts.SearchPath
+	}
+	// When a request's context is cancelled (client gone, timeout, shutdown),
+	// ask the server to cancel the running statement instead of just closing
+	// the socket. A backend blocked on a lock would otherwise keep waiting,
+	// and keep the locks it already holds (including the idempotency key
+	// lock, which makes the client's retry see 409), until it next tried to
+	// talk to the dead socket. The cancelled transaction rolls back and the
+	// connection stays usable.
+	cfg.ConnConfig.BuildContextWatcherHandler = func(c *pgconn.PgConn) ctxwatch.Handler {
+		return &pgconn.CancelRequestContextWatcherHandler{Conn: c, DeadlineDelay: time.Second}
 	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
