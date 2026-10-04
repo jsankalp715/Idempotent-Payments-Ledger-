@@ -64,6 +64,7 @@ service postgresql start && scripts/dev-db.sh   # role "ledger", databases ledge
 make test          # unit + integration + CI-sized stress (needs DATABASE_URL, defaulted by make)
 make race          # whole suite under -race, three shuffled runs
 make stress-large  # 12,000 transfers, 200 goroutines, 20 accounts
+make verify        # everything above plus serializable and 30k-transfer runs (~3 min)
 make lint          # gofmt, go vet, staticcheck
 make run           # the service on :8080 against the "ledger" database
 ```
