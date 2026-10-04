@@ -76,9 +76,9 @@ recovery point after a context compaction. Decisions and their rationale live in
 - [ ] Results recorded in REPORT.md
 
 ## M10: CI
-- [ ] GitHub Actions: lint (gofmt, vet, staticcheck), race tests with a Postgres service,
-      stress under both isolation levels, Docker build and compose smoke test
-- [ ] CI green on the pushed branch, checked through the GitHub API
+- [x] GitHub Actions: lint (gofmt, vet, staticcheck), race tests with a Postgres service,
+      stress under both isolation levels, Docker build and compose smoke test; govulncheck
+- [x] CI green on the pushed branch, checked through the GitHub API
 
 ## M11: Docker
 - [x] Multi-stage Dockerfile (static binary, non-root, healthcheck subcommand)
@@ -86,7 +86,7 @@ recovery point after a context compaction. Decisions and their rationale live in
 - [x] `docker compose up --build` verified locally (or limits documented)
 
 ## M12: Docs and wrap-up
-- [ ] README: overview, API, design, guarantees and how each is proven, how to run and test
-- [ ] docs/DECISIONS.md complete
+- [x] README: overview, API, design, guarantees and how each is proven, how to run and test
+- [x] docs/DECISIONS.md complete
 - [ ] REPORT.md: what was built, verification evidence, what was not verified, limitations
 - [ ] Final self-review of the diff; PR opened or reason documented

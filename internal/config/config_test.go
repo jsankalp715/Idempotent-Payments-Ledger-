@@ -130,11 +130,12 @@ func TestLoadCrossFieldValidation(t *testing.T) {
 		"DB_MIN_CONNS":        "6",
 		"TX_RETRY_BASE_DELAY": "2s",
 		"TX_RETRY_MAX_DELAY":  "1s",
+		"IDEMPOTENCY_TTL":     "500ms",
 	}))
 	if err == nil {
 		t.Fatal("expected an error")
 	}
-	for _, want := range []string{"DB_MIN_CONNS", "TX_RETRY_BASE_DELAY"} {
+	for _, want := range []string{"DB_MIN_CONNS", "TX_RETRY_BASE_DELAY", "IDEMPOTENCY_TTL"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error does not mention %s: %v", want, err)
 		}

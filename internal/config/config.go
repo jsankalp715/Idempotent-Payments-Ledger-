@@ -75,6 +75,9 @@ func Load(getenv func(string) string) (Config, error) {
 	if cfg.DBMinConns > cfg.DBMaxConns {
 		p.errs = append(p.errs, fmt.Errorf("DB_MIN_CONNS (%d) must not exceed DB_MAX_CONNS (%d)", cfg.DBMinConns, cfg.DBMaxConns))
 	}
+	if cfg.IdempotencyTTL < time.Second {
+		p.errs = append(p.errs, fmt.Errorf("IDEMPOTENCY_TTL (%s) must be at least 1s", cfg.IdempotencyTTL))
+	}
 	if cfg.TxRetryBaseDelay > cfg.TxRetryMaxDelay {
 		p.errs = append(p.errs, fmt.Errorf("TX_RETRY_BASE_DELAY (%s) must not exceed TX_RETRY_MAX_DELAY (%s)", cfg.TxRetryBaseDelay, cfg.TxRetryMaxDelay))
 	}

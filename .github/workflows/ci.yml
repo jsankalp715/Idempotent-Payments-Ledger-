@@ -28,8 +28,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: stable
       - name: gofmt
@@ -54,8 +54,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: stable
       - name: govulncheck
@@ -90,13 +90,17 @@ jobs:
       # A missing database must fail the build, not skip the tests.
       LEDGER_REQUIRE_DB: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
-      - name: Allow more Postgres connections (test packages run in parallel)
+      - name: Tune Postgres for tests
+        # More connections (test packages run in parallel), and no logging of
+        # the thousands of intentional serialization failures and injected
+        # faults, which would bury useful output in the job log.
         run: |
-          docker exec ${{ job.services.postgres.id }} psql -U ledger -d ledger_test -c "ALTER SYSTEM SET max_connections = 300"
+          docker exec ${{ job.services.postgres.id }} psql -U ledger -d ledger_test \
+            -c "ALTER SYSTEM SET max_connections = 300" -c "ALTER SYSTEM SET log_min_messages = 'log'"
           docker restart ${{ job.services.postgres.id }}
           for i in $(seq 1 60); do
             docker exec ${{ job.services.postgres.id }} pg_isready -U ledger -d ledger_test && break
@@ -111,7 +115,7 @@ jobs:
           go test -count=1 -coverpkg=./internal/... -coverprofile=coverage.out ./...
           echo "### Coverage" >> "$GITHUB_STEP_SUMMARY"
           go tool cover -func=coverage.out | tail -1 | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.go == 'stable'
         with:
           name: coverage
@@ -141,10 +145,19 @@ jobs:
       DATABASE_URL: postgres://ledger:ledger@localhost:5432/ledger_test?sslmode=disable
       LEDGER_REQUIRE_DB: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: stable
+      - name: Tune Postgres for tests
+        run: |
+          docker exec ${{ job.services.postgres.id }} psql -U ledger -d ledger_test \
+            -c "ALTER SYSTEM SET max_connections = 300" -c "ALTER SYSTEM SET log_min_messages = 'log'"
+          docker restart ${{ job.services.postgres.id }}
+          for i in $(seq 1 60); do
+            docker exec ${{ job.services.postgres.id }} pg_isready -U ledger -d ledger_test && break
+            sleep 1
+          done
       - name: Large stress, read committed
         env:
           STRESS_MODE: large
@@ -166,8 +179,8 @@ jobs:
             echo '```'
             grep -hE "config|outcomes|invariants hold|transfers in|requests sent|retries" stress-*.log || true
             echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: stress-logs
@@ -179,7 +192,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: docker compose up --build
         run: docker compose up --build -d --wait
       - name: Smoke test
