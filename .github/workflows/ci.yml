@@ -1,0 +1,196 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    # Explicit bash runs with -o pipefail, so "go test | tee" fails properly.
+    shell: bash
+
+env:
+  # Never download a different toolchain behind our back.
+  GOTOOLCHAIN: local
+  STATICCHECK_VERSION: v0.6.1
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then echo "::error::gofmt needed:"; echo "$unformatted"; exit 1; fi
+      - name: go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+      - name: go vet
+        run: go vet ./...
+      - name: staticcheck
+        run: go run honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION} ./...
+      - name: build
+        run: CGO_ENABLED=0 go build -trimpath -o bin/ledger ./cmd/ledger
+
+  vulncheck:
+    # Known vulnerabilities in dependencies and in the standard library of
+    # the toolchain release images are built with (latest stable Go).
+    name: govulncheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  test:
+    # The whole suite (unit, integration on real Postgres, CI-sized stress)
+    # under the race detector, three times in shuffled order to shake out
+    # flakiness, on the minimum supported Go and on the latest release.
+    name: test (go ${{ matrix.go }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.24.x", "stable"]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ledger
+          POSTGRES_PASSWORD: ledger
+          POSTGRES_DB: ledger_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ledger -d ledger_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://ledger:ledger@localhost:5432/ledger_test?sslmode=disable
+      # A missing database must fail the build, not skip the tests.
+      LEDGER_REQUIRE_DB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Allow more Postgres connections (test packages run in parallel)
+        run: |
+          docker exec ${{ job.services.postgres.id }} psql -U ledger -d ledger_test -c "ALTER SYSTEM SET max_connections = 300"
+          docker restart ${{ job.services.postgres.id }}
+          for i in $(seq 1 60); do
+            docker exec ${{ job.services.postgres.id }} pg_isready -U ledger -d ledger_test && break
+            sleep 1
+          done
+          docker exec ${{ job.services.postgres.id }} psql -U ledger -d ledger_test -c "SHOW max_connections"
+      - name: go test -race -count=3 -shuffle=on ./...
+        run: go test -race -count=3 -shuffle=on -timeout 25m ./...
+      - name: Coverage
+        if: matrix.go == '1.24.x'
+        run: |
+          go test -count=1 -coverpkg=./internal/... -coverprofile=coverage.out ./...
+          echo "### Coverage" >> "$GITHUB_STEP_SUMMARY"
+          go tool cover -func=coverage.out | tail -1 | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: matrix.go == '1.24.x'
+        with:
+          name: coverage
+          path: coverage.out
+
+  stress:
+    # Large mode (12,000 transfers, 200 goroutines, 20 accounts) under the race
+    # detector, with read committed and with SERIALIZABLE transactions, plus
+    # the integration suite under SERIALIZABLE to exercise the retry path.
+    name: stress
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ledger
+          POSTGRES_PASSWORD: ledger
+          POSTGRES_DB: ledger_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ledger -d ledger_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://ledger:ledger@localhost:5432/ledger_test?sslmode=disable
+      LEDGER_REQUIRE_DB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+      - name: Large stress, read committed
+        env:
+          STRESS_MODE: large
+        run: go test -race -count=1 -run TestStress -v -timeout 15m ./test/stress | tee stress-large.log
+      - name: Large stress, serializable
+        env:
+          STRESS_MODE: large
+          TX_ISOLATION: serializable
+        run: go test -race -count=1 -run TestStress -v -timeout 15m ./test/stress | tee stress-large-serializable.log
+      - name: Integration suite, serializable
+        env:
+          TX_ISOLATION: serializable
+        run: go test -race -count=1 -timeout 15m ./test/integration/...
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Stress results"
+            echo '```'
+            grep -hE "config|outcomes|invariants hold|transfers in|requests sent|retries" stress-*.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stress-logs
+          path: stress-*.log
+
+  docker:
+    # Builds the image and runs the compose stack end to end.
+    name: docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker compose up --build
+        run: docker compose up --build -d --wait
+      - name: Smoke test
+        run: scripts/smoke.sh http://localhost:8080
+      - name: Graceful shutdown
+        run: |
+          docker compose stop ledger
+          docker compose logs ledger | grep -q '"msg":"shutdown complete"'
+      - name: Logs
+        if: always()
+        run: docker compose logs
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

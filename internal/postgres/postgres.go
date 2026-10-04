@@ -119,7 +119,7 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logger) error
 		return fmt.Errorf("apply migrations: %w", err)
 	}
 	for _, r := range results {
-		logger.Info("applied migration", "version", r.Source.Version, "file", r.Source.Path, "duration", r.Duration)
+		logger.Info("applied migration", "version", r.Source.Version, "file", r.Source.Path, "duration", r.Duration.String())
 	}
 	return nil
 }

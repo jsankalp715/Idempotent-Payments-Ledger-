@@ -1,0 +1,60 @@
+# Local stack: PostgreSQL 16 and the ledger service.
+#
+#   docker compose up --build -d --wait
+#   scripts/smoke.sh                      # end-to-end check against localhost:8080
+#   docker compose down -v
+#
+# Behind a TLS-intercepting proxy, point EXTRA_CA_FILE at its CA so the image
+# build can download Go modules: EXTRA_CA_FILE=/path/ca.pem docker compose up --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ledger
+      POSTGRES_PASSWORD: ledger
+      POSTGRES_DB: ledger
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledger -d ledger"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Published on a non-default port so it does not clash with a local Postgres.
+      - "127.0.0.1:55432:5432"
+
+  ledger:
+    build:
+      context: .
+      secrets:
+        - extra_ca
+    image: idempotent-payments-ledger:local
+    environment:
+      DATABASE_URL: postgres://ledger:ledger@postgres:5432/ledger?sslmode=disable
+      HTTP_ADDR: ":8080"
+      LOG_FORMAT: json
+      LOG_LEVEL: info
+      SHUTDOWN_DRAIN_DELAY: 2s
+      SHUTDOWN_TIMEOUT: 20s
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/ledger", "healthcheck"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    # Longer than drain delay + shutdown timeout, so SIGTERM gets a clean drain.
+    stop_grace_period: 30s
+    restart: unless-stopped
+
+secrets:
+  extra_ca:
+    file: ${EXTRA_CA_FILE:-/dev/null}
+
+volumes:
+  pgdata:

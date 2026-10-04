@@ -117,7 +117,7 @@ type outcome struct {
 // stats are counted across all workers.
 type stats struct {
 	sent, lost, timedOut, preCancelled, transportErrors atomic.Int64
-	inFlight409, unavailable503, replays             atomic.Int64
+	inFlight409, unavailable503, replays                atomic.Int64
 }
 
 type loseKey struct{}
