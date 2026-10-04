@@ -3,10 +3,11 @@
 DATABASE_URL ?= postgres://ledger:ledger@127.0.0.1:5432/ledger_test?sslmode=disable
 export DATABASE_URL
 
-STATICCHECK_VERSION ?= v0.6.1
+STATICCHECK_VERSION ?= v0.8.1
+GOVULNCHECK_VERSION ?= latest
 GO_PACKAGES := ./...
 
-.PHONY: all build run test race stress stress-large stress-serializable lint fmt vet staticcheck db docker-up docker-down smoke cover clean
+.PHONY: all build run test race stress stress-large stress-serializable lint fmt vet staticcheck vulncheck db docker-up docker-down smoke cover clean
 
 all: lint test
 
@@ -45,6 +46,9 @@ vet:
 
 staticcheck:
 	go run honnef.co/go/tools/cmd/staticcheck@$(STATICCHECK_VERSION) $(GO_PACKAGES)
+
+vulncheck: ## Known vulnerabilities in dependencies and the standard library
+	go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) $(GO_PACKAGES)
 
 db: ## Create the local role and databases (Postgres must be running)
 	scripts/dev-db.sh
