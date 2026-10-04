@@ -51,7 +51,7 @@ retrying tx runner · `internal/idempotency` fingerprint, key store, TTL cleanup
 `internal/testdb` per-test schema helper · `test/integration`, `test/stress` black-box tests.
 
 ## Commands (see Makefile)
-`make test` unit + integration · `make race` race detector, count=3 · `make stress` CI-sized stress ·
+`make test` unit + integration · `make race` race detector, count=3 · `make verify` full battery · `make stress` CI-sized stress ·
 `make stress-large` 10k+ transfers / 200 goroutines / 20 accounts · `make lint` · `make vulncheck` ·
 `make run` · `make docker-up` + `make smoke`.
 
