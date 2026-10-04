@@ -31,19 +31,19 @@ recovery point after a context compaction. Decisions and their rationale live in
 - [x] Retry counters (by reason) for tests and logs; unit tests for classification and backoff
 
 ## M4: Ledger domain
-- [ ] Validation (amounts, currency, ids, same-account) with unit tests
-- [ ] CreateAccount with optional funding transfer from the per-currency system account
-- [ ] Transfer: lock both accounts FOR UPDATE in id order, check funds, 1 transfer + 2 entries,
+- [x] Validation (amounts, currency, ids, same-account) with unit tests
+- [x] CreateAccount with optional funding transfer from the per-currency system account
+- [x] Transfer: lock both accounts FOR UPDATE in id order, check funds, 1 transfer + 2 entries,
       update cached balances
-- [ ] GetAccount, GetTransfer, ListEntries (cursor pagination)
+- [x] GetAccount, GetTransfer, ListEntries (cursor pagination)
 
 ## M5: Idempotency
-- [ ] Request fingerprint (SHA-256 over canonical request) with unit tests
-- [ ] Key header validation
-- [ ] Store.Do: advisory try-lock (409 in flight), lookup (replay or 422), run business fn and
+- [x] Request fingerprint (SHA-256 over canonical request) with unit tests
+- [x] Key header validation
+- [x] Store.Do: advisory try-lock (409 in flight), lookup (replay or 422), run business fn and
       persist key + response in the same transaction
 - [ ] Permanent guard: transfers.idempotency_key UNIQUE; response rebuilt after TTL expiry
-- [ ] TTL cleanup job (batched, SKIP LOCKED)
+- [x] TTL cleanup job (batched, SKIP LOCKED)
 
 ## M6: HTTP service
 - [ ] Routes: POST/GET accounts, GET entries, POST/GET transfers, GET /healthz
