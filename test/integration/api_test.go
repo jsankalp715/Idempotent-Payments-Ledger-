@@ -167,16 +167,16 @@ func TestAccountEndpoints(t *testing.T) {
 		status int
 		code   string
 	}{
-		"/v1/accounts/00000000-0000-4000-8000-000000000000":                       {404, "account_not_found"},
-		"/v1/accounts/not-a-uuid":                                                 {400, "invalid_id"},
-		"/v1/accounts/00000000-0000-4000-8000-000000000000/entries":               {404, "account_not_found"},
-		"/v1/transfers/00000000-0000-4000-8000-000000000000":                      {404, "transfer_not_found"},
-		"/v1/transfers/nope":                                                      {400, "invalid_id"},
-		"/v1/accounts/" + acc.ID + "/entries?limit=0":                             {400, "invalid_query"},
-		"/v1/accounts/" + acc.ID + "/entries?limit=201":                           {400, "invalid_query"},
-		"/v1/accounts/" + acc.ID + "/entries?cursor=-4":                           {400, "invalid_query"},
-		"/v1/accounts/" + acc.ID + "/entries?cursor=abc":                          {400, "invalid_query"},
-		"/v2/accounts":                                                            {404, "not_found"},
+		"/v1/accounts/00000000-0000-4000-8000-000000000000":         {404, "account_not_found"},
+		"/v1/accounts/not-a-uuid":                                   {400, "invalid_id"},
+		"/v1/accounts/00000000-0000-4000-8000-000000000000/entries": {404, "account_not_found"},
+		"/v1/transfers/00000000-0000-4000-8000-000000000000":        {404, "transfer_not_found"},
+		"/v1/transfers/nope":                                        {400, "invalid_id"},
+		"/v1/accounts/" + acc.ID + "/entries?limit=0":               {400, "invalid_query"},
+		"/v1/accounts/" + acc.ID + "/entries?limit=201":             {400, "invalid_query"},
+		"/v1/accounts/" + acc.ID + "/entries?cursor=-4":             {400, "invalid_query"},
+		"/v1/accounts/" + acc.ID + "/entries?cursor=abc":            {400, "invalid_query"},
+		"/v2/accounts": {404, "not_found"},
 		"/v1/accounts/00000000-0000-4000-8000-000000000000/entries/extra/segments": {404, "not_found"},
 	} {
 		r, err := s.Client.Do(ctx, http.MethodGet, path, nil)
