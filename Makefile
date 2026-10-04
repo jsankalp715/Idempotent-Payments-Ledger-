@@ -7,7 +7,7 @@ STATICCHECK_VERSION ?= v0.8.1
 GOVULNCHECK_VERSION ?= latest
 GO_PACKAGES := ./...
 
-.PHONY: all build run test race stress stress-large stress-serializable lint fmt vet staticcheck vulncheck db docker-up docker-down smoke cover clean
+.PHONY: all build run test race verify stress stress-large stress-serializable lint fmt vet staticcheck vulncheck db docker-up docker-down smoke cover clean
 
 all: lint test
 
@@ -22,6 +22,9 @@ test: ## Unit + integration tests (CI-sized stress included)
 
 race: ## Whole suite under the race detector, three times, shuffled
 	go test -race -count=3 -shuffle=on -timeout 30m $(GO_PACKAGES)
+
+verify: ## Full local battery: race x5, large stress (both isolation levels), 30k transfers
+	scripts/verify.sh
 
 stress: ## CI-sized concurrent stress test with the race detector
 	go test -race -count=1 -run 'TestStress' -v -timeout 15m ./test/stress

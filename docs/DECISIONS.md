@@ -200,3 +200,10 @@ store, as in CI.
 Amounts and initial balances are capped at 10^15 minor units: below 2^53, so values survive
 JavaScript clients, and far below int64 overflow. Additions are also checked against
 int64 bounds before writing (`balance_overflow`).
+
+## D23. No pull request
+The repository was empty at the start, so the working branch is its only branch, and
+therefore its default branch. GitHub rejects a PR without a base (`PullRequest.base
+(invalid)`). Pushing a new `main` would break the instruction to push only to the
+working branch, so the pushed branch is left as the deliverable. To review as a PR, create
+`main` from the first commit (`37fd30c`) and open a PR from `claude/fervent-mayer-hgmyt9`.

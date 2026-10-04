@@ -73,7 +73,7 @@ recovery point after a context compaction. Decisions and their rationale live in
 ## M9: Verification runs
 - [x] `go test -race -count=3 ./...` passes repeatedly
 - [x] Large stress passes (read committed and serializable)
-- [ ] Results recorded in REPORT.md
+- [x] Results recorded in REPORT.md
 
 ## M10: CI
 - [x] GitHub Actions: lint (gofmt, vet, staticcheck), race tests with a Postgres service,
@@ -88,5 +88,5 @@ recovery point after a context compaction. Decisions and their rationale live in
 ## M12: Docs and wrap-up
 - [x] README: overview, API, design, guarantees and how each is proven, how to run and test
 - [x] docs/DECISIONS.md complete
-- [ ] REPORT.md: what was built, verification evidence, what was not verified, limitations
-- [ ] Final self-review of the diff; PR opened or reason documented
+- [x] REPORT.md: what was built, verification evidence, what was not verified, limitations
+- [x] Final self-review of the diff; PR opened or reason documented
