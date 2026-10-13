@@ -20,7 +20,7 @@ and in CI.
 | 5. GitHub Actions CI green, checked through the GitHub API | Done |
 | 6. Dockerfile and docker-compose verified | Done (locally and in CI) |
 | 7. README, DECISIONS, PLAN, REPORT | Done |
-| 8. Committed, pushed, PR | Pushed; **no PR possible** (see "What was not verified, and caveats") |
+| 8. Committed and pushed | Done: on `main`, the default branch |
 
 The task prompt was cut off mid-sentence ("...to detect flakiness. Never") and its
 "Definition of done" section never arrived. The definition used here was reconstructed from
@@ -138,12 +138,10 @@ the clients retry them with the same key. The ledger is still exact.
 
 ## What was not verified, and caveats
 
-* **No pull request.** The GitHub repository was empty at the start. The work branch
-  `claude/fervent-mayer-hgmyt9` is its only branch, and therefore its default branch, so
-  there is no base to open a PR against. The attempt (head `claude/fervent-mayer-hgmyt9`,
-  base `main`) failed with `Validation Failed: PullRequest.base (invalid)`. Creating another
-  branch was ruled out by the instruction to push only to the working branch. To review as a PR, create `main` from the
-  first commit (`37fd30c`) and open a PR from the work branch.
+* **No pull request was opened.** The repository was empty at the start, so the work was
+  done on a single branch with no base to open a PR against (GitHub rejected the attempt
+  with `PullRequest.base (invalid)`). That branch has since been renamed to `main`, which
+  is now the default branch, so the work is reviewed directly there.
 * **govulncheck cannot run in the build VM**, because `vuln.go.dev` is blocked by its egress
   policy (HTTP 403). It runs, and passes, in CI.
 * **CI artifacts could not be downloaded** from the VM (the artifact storage host is blocked).

@@ -13,8 +13,8 @@ stress tests in GitHub Actions. Go 1.26+ (1.27 locally), net/http, pgx/v5, goose
 - Fully autonomous: never end a turn to ask the user anything. Pick the most sensible
   option, record it in `docs/DECISIONS.md`, keep going. Only stop when the Definition of
   done holds, or when options are truly exhausted (explain why in `REPORT.md`).
-- Develop on branch `claude/fervent-mayer-hgmyt9`. After every milestone: commit, then
-  `git push -u origin claude/fervent-mayer-hgmyt9` (retry with backoff on network errors).
+- Work on `main` (the only and default branch). After every milestone: commit, then
+  `git push -u origin main` (retry with backoff on network errors).
   Never force-push, never delete branches, never push to any other branch.
 - Never skip, weaken or delete a test or assertion to get green: fix the code. Never claim
   verification that was not actually run; `REPORT.md` states exactly what was verified.
@@ -43,8 +43,7 @@ stress tests in GitHub Actions. Go 1.26+ (1.27 locally), net/http, pgx/v5, goose
   The sandbox intercepts TLS; builds need its CA as a secret:
   `EXTRA_CA_FILE=/root/.ccr/ca-bundle.crt docker compose up --build -d --wait`.
 - GitHub: use the `mcp__github__*` tools (load via ToolSearch) to inspect Actions runs and
-  open PRs. The remote was empty at start: this branch is the only branch, so a PR may be
-  impossible (no base branch). If so, leave the pushed branch and say so in `REPORT.md`.
+  open PRs. `main` is the default branch; for a PR, push a feature branch and target `main`.
 
 ## Layout
 `cmd/ledger` entrypoint · `internal/config` env config · `internal/postgres` pool, migrations,
@@ -76,4 +75,4 @@ The task prompt was truncated mid-sentence; this is reconstructed from its visib
    what could not be verified is documented).
 7. README (API, design, guarantees and how they are proven), `docs/DECISIONS.md`,
    `docs/PLAN.md` (all ticked) and `REPORT.md` are complete and accurate.
-8. Everything is committed and pushed; a PR is opened, or `REPORT.md` explains why not.
+8. Everything is committed and pushed to `main`.

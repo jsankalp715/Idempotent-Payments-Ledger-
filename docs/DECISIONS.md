@@ -201,9 +201,7 @@ Amounts and initial balances are capped at 10^15 minor units: below 2^53, so val
 JavaScript clients, and far below int64 overflow. Additions are also checked against
 int64 bounds before writing (`balance_overflow`).
 
-## D23. No pull request
-The repository was empty at the start, so the working branch is its only branch, and
-therefore its default branch. GitHub rejects a PR without a base (`PullRequest.base
-(invalid)`). Pushing a new `main` would break the instruction to push only to the
-working branch, so the pushed branch is left as the deliverable. To review as a PR, create
-`main` from the first commit (`37fd30c`) and open a PR from `claude/fervent-mayer-hgmyt9`.
+## D23. No pull request; work lives on `main`
+The repository was empty at the start, so the working branch was its only branch and
+GitHub rejected a PR without a base (`PullRequest.base (invalid)`). The branch was later
+renamed to `main` and made the default branch, so the work is reviewed directly there.
