@@ -26,6 +26,8 @@ stress tests in GitHub Actions. Go 1.26+ (1.27 locally), net/http, pgx/v5, goose
 - Use `export GOTOOLCHAIN=go1.27.1` (go.mod needs Go 1.26+; the VM ships 1.24.7). Keep
   `make vulncheck`-clean dependencies (it runs in CI; vuln.go.dev is blocked on the VM).
 - Never put model names or identifiers in commits, code or docs.
+- Commits are authored by Sankalp Jain <jsankalp715@gmail.com> only: no Co-Authored-By,
+  Claude-Session or other attribution lines in commit messages.
 
 ## Environment (Claude Code cloud VM; verified)
 - Ubuntu 24.04, 4 vCPU, 16 GB RAM, ~30 GB disk. Go 1.24.7 (go1.27.1 auto-downloads via
